@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Context-Free Grammar Practice</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- START SCREEN OVERLAY -->
+  <div id="start-screen" class="start-overlay">
+    <div class="start-card">
+      <h1 class="start-title">GRAMMAR MATRIX OVERRIDE</h1>
+      <p class="start-subtitle">Context-Free Grammar & Parse Tree Simulator</p>
+
+      <!-- Navigation Tabs -->
+      <div class="start-tabs">
+        <button class="tab-btn active" onclick="switchStartTab('about')">About System</button>
+        <button class="tab-btn" onclick="switchStartTab('how-to-play')">How to Play</button>
+        <button class="tab-btn" onclick="switchStartTab('theory')">Educational Guide</button>
+        <button class="tab-btn" onclick="switchStartTab('credits')">Developers</button>
+      </div>
+
+      <!-- Tab Content Sections -->
+      <div class="start-body">
+        <!-- ABOUT TAB -->
+        <div id="tab-about" class="tab-content active">
+          <p><strong>System Objective:</strong> Master formal language theory by constructing production rules for Context-Free Grammars (CFGs). Your job is to construct rules that accept valid language strings while rejecting invalid sequences.</p>
+          <div class="feature-highlights">
+            <div>⚡ <strong>15 Randomised Challenges</strong></div>
+            <div>⏱️ <strong>30s Timed Runs</strong></div>
+            <div>🌲 <strong>Real-time Parse Tree Generation</strong></div>
+          </div>
+        </div>
+
+        <!-- HOW TO PLAY TAB -->
+        <div id="tab-how-to-play" class="tab-content">
+          <ol class="instructions-list">
+            <li><strong>Drag & Drop:</strong> Drag components (non-terminals, terminals, and <strong>ε</strong>) from the palette into the rule slots.</li>
+            <li><strong>Formulate Rules:</strong> Build production rules like <code>S -> aSb</code>, <code>S -> ab</code>, or <code>S -> ε</code> to match the target language.</li>
+            <li><strong>Submit Solution:</strong> Click <strong>Check Grammar</strong> to validate. Correct answers generate a Parse Tree showing the derivation!</li>
+            <li><strong>Manage Penalties:</strong> Wrong submissions deduct <strong>1 Attempt (❤️)</strong> and penalize <strong>5 Seconds</strong>.</li>
+          </ol>
+        </div>
+
+        <!-- THEORY TAB -->
+        <div id="tab-theory" class="tab-content">
+          <div class="theory-grid">
+            <div class="theory-card">
+              <h4>Non-Terminals (S, E, T)</h4>
+              <p>Variables replaced by strings of variables and terminals. <strong>S</strong> acts as the start symbol.</p>
+            </div>
+            <div class="theory-card">
+              <h4>Terminals (a, b, c, d, (, ), 0, 1, ε)</h4>
+              <p>Basic symbols forming string leaves. <strong>ε (epsilon)</strong> represents the empty string used to terminate recursion.</p>
+            </div>
+            <div class="theory-card">
+              <h4>Production Rules (->)</h4>
+              <p>Rewrite rules defining string generation. Format: <code>[Non-Terminal] -> [Terminals/Non-Terminals/ε]</code>.</p>
+            </div>
+            <div class="theory-card">
+              <h4>Parse Trees</h4>
+              <p>A visual hierarchy showing step-by-step how terminal strings (or empty string steps via ε) are derived from the start symbol.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEVELOPER CREDITS TAB -->
+        <div id="tab-credits" class="tab-content">
+          <p style="margin-bottom: 10px;">Created as an interactive computer science tool for Automata & Formal Language Theory.</p>
+          <div class="credits-box">
+            <div class="dev-card">
+              <span class="dev-role">Member</span>
+              <span class="dev-name">Florie Mae Magsalay</span>
+            </div>
+            <div class="dev-card">
+              <span class="dev-role">Member</span>
+              <span class="dev-name">Jannel Partosa</span>
+            </div>
+            <div class="dev-card">
+              <span class="dev-role">Member</span>
+              <span class="dev-name">Alyssa Jean Toso</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- START ACTION BUTTON -->
+      <button class="start-btn" onclick="startGame()">START MATRIX OVERRIDE</button>
+    </div>
+  </div>
+
+  <!-- SINGLE BIG OUTER APPLICATION CARD -->
+  <div class="app-outer-card">
+    
+    <h1 class="main-header-title">Context-Free Grammar Builder</h1>
+
+    <!-- HUD HEADER -->
+    <div class="hud">
+      <div id="level-title">Level 1: Introduction</div>
+      <div id="lives-display">Attempts Remaining: <span class="life">3</span></div>
+      <div id="timer-display">Time Remaining: <span id="timer">30</span>s</div>
+    </div>
+
+    <!-- MAIN GAME DASHBOARD CONTAINER -->
+    <div class="game-container">
+      <div class="panel main-dashboard-card">
+        
+        <!-- TOP WORKSPACE ROW: Target Strings & Production Rules -->
+        <div class="workspace-grid">
+          <!-- Target Strings Column -->
+          <div class="card-section">
+            <h3>Target Strings</h3>
+            <p>Valid Strings (Grammar MUST accept):</p>
+            <ul id="valid-list" class="string-list valid-list"></ul>
+            <p>Invalid Strings (Grammar MUST reject):</p>
+            <ul id="invalid-list" class="string-list invalid-list"></ul>
+          </div>
+
+          <!-- Production Rules Column -->
+          <div class="card-section">
+            <h3>Production Rules</h3>
+            <p class="small-note">Drag components into the slots to build your grammar rules:</p>
+
+            <!-- DRAGGABLE BLOCKS PALETTE -->
+            <div id="palette" class="block-palette"></div>
+
+            <!-- RULE SLOTS -->
+            <div id="rule-slots-container" class="rule-slots-container">
+              <!-- Slots injected dynamically -->
+            </div>
+
+            <div class="controls">
+              <button id="clear-btn" class="btn-alt">Clear Slots</button>
+              <button id="submit-btn">Check Grammar</button>
+              <button id="next-btn" class="btn-success" style="display: none;">Next Level ▶</button>
+            </div>
+
+            <div id="status" class="status-msg"></div>
+          </div>
+        </div>
+
+        <hr class="card-divider" />
+
+        <!-- BOTTOM ROW: Parse Tree Display -->
+        <div class="card-section tree-section">
+          <h3>Parse Tree</h3>
+          <div id="tree-display"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOAD SCRIPTS IN THIS EXACT ORDER -->
+  <script src="js/levels.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/tree.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
