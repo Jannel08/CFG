@@ -5,7 +5,7 @@
  */
 class ContextFreeGrammar {
   constructor(rulesString) {
-    this.rules = new Map(); // Non-Terminal -> Array of Production Arrays
+    this.rules = new Map(); 
     this.startSymbol = 'S';
     this.parseRules(rulesString);
   }
@@ -23,8 +23,14 @@ class ContextFreeGrammar {
         this.rules.set(lhs, []);
       }
 
-      // Split production into individual symbols
-      this.rules.get(lhs).push(rhs.split(''));
+      // 1. Split alternatives separated by '|' (e.g., "0S|0" -> ["0S", "0"])
+      const alternatives = rhs.split('|');
+      alternatives.forEach(alt => {
+        if (alt.length > 0) {
+          // 2. Split production into individual symbol characters
+          this.rules.get(lhs).push(alt.split(''));
+        }
+      });
     });
   }
 
@@ -109,9 +115,60 @@ class ContextFreeGrammar {
   }
 }
 
-const GrammarValidator = {
-  validateUserGrammar(userInput, level) {
+class TreeRenderer {
+  static render(ast, container) {
+    if (!container) {
+      console.error("Tree container element not found!");
+      return;
+    }
+    
+    // Clear old tree content
+    container.innerHTML = "";
 
+    if (!ast) {
+      container.innerHTML = "<p style='color:var(--magenta)'>No tree data available.</p>";
+      return;
+    }
+
+    const treeRoot = document.createElement('div');
+    treeRoot.className = 'tree';
+    
+    // Wrap inside a root <ul> if your CSS requires tree lists
+    const rootUl = document.createElement('ul');
+    rootUl.appendChild(this.createTreeDom(ast));
+    treeRoot.appendChild(rootUl);
+
+    container.appendChild(treeRoot);
+  }
+
+  static createTreeDom(node) {
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.className = 'node';
+    span.textContent = typeof node === 'string' ? node : node.name;
+    li.appendChild(span);
+
+    // Keep all child nodes (including epsilon 'ε')
+    const children = node.children || [];
+
+    if (children.length > 0) {
+      const ul = document.createElement('ul');
+      children.forEach(child => {
+        ul.appendChild(this.createTreeDom(child));
+      });
+      li.appendChild(ul);
+    }
+
+    return li;
+  }
+}
+
+const GrammarValidator = {
+  validate(userInput, level) {
+    return this.validateUserGrammar(userInput, level);
+  },
+
+  validateUserGrammar(userInput, level) {
     if (!userInput || userInput.trim() === "") {
       return {
         success: false,
@@ -119,66 +176,64 @@ const GrammarValidator = {
       };
     }
 
-    // Remove spaces so:
-    // S -> aSb
-    // S->aSb
-    // are treated as the same grammar.
-    const submitted = userInput
-      .replace(/\s+/g, "")
-      .trim();
+    const submitted = userInput.replace(/\s+/g, "").trim();
+    
+    // Normalize string order for OR (|) rules
+    const normalizePattern = (str) => {
+      if (!str.includes('->')) return str;
+      const [lhs, rhs] = str.split('->');
+      const sortedRhs = rhs.split('|').sort().join('|');
+      return `${lhs}->${sortedRhs}`;
+    };
 
-    // Get the grammars accepted for this level
-    const expectedPatterns = (level.expectedPatterns || []).map(pattern =>
-      pattern.replace(/\s+/g, "").trim()
-    );
+    const normalizedSubmitted = normalizePattern(submitted);
+    const expectedPatterns = (level.expectedPatterns || []).map(p => normalizePattern(p.replace(/\s+/g, "").trim()));
+    const isPatternMatched = expectedPatterns.includes(normalizedSubmitted);
 
-    // Check if the submitted grammar matches ANY expected pattern
-    const isCorrect = expectedPatterns.includes(submitted);
+    // 1. Instantiate dynamic CFG Engine
+    const cfg = new ContextFreeGrammar(userInput);
+    let sampleTree = null;
 
-    if (isCorrect) {
+    const validStrings = level.valid || [];
+    const invalidStrings = level.invalid || [];
 
-      // Generate a tree for the submitted grammar
-      let generatedTree = level.demoTree;
-
-      // Level-specific simple trees
-      if (submitted === "S->ab") {
-        generatedTree = {
-          name: "S",
-          children: [
-            { name: "a" },
-            { name: "b" }
-          ]
-        };
+    // 2. ALWAYS attempt to build a parse tree dynamically first
+    let acceptsAllValid = true;
+    for (const str of validStrings) {
+      const res = cfg.derives(str);
+      if (!res.success) {
+        acceptsAllValid = false;
+      } else if (!sampleTree && res.tree) {
+        sampleTree = res.tree; // Capture actual generated parse tree
       }
+    }
 
-      else if (submitted === "S->aSb") {
-        generatedTree = {
-          name: "S",
-          children: [
-            { name: "a" },
-            {
-              name: "S",
-              children: [
-                { name: "a" },
-                { name: "b" }
-              ]
-            },
-            { name: "b" }
-          ]
-        };
+    let rejectsAllInvalid = true;
+    for (const str of invalidStrings) {
+      const res = cfg.derives(str);
+      if (res.success) {
+        rejectsAllInvalid = false;
+        break;
       }
+    }
 
+    // 3. Final Verdict: Check pattern match OR functional string derivations
+    if (isPatternMatched || (acceptsAllValid && rejectsAllInvalid && validStrings.length > 0)) {
       return {
         success: true,
-        message: `Correct! "${userInput}" is an accepted grammar.`,
-        tree: generatedTree
+        message: `Correct! "${userInput}" is a valid production rule for this level.`,
+        // ALWAYS prioritize sampleTree (dynamically generated tree) over fallback demoTree
+        tree: sampleTree || level.demoTree || null
       };
     }
 
-    // Not found in expectedPatterns
     return {
       success: false,
-      message: `Incorrect grammar. "${userInput}" is not one of the accepted patterns.`
+      message: `Incorrect grammar. Your production rules do not generate the target language.`
     };
   }
 };
+
+// Export to global scope
+window.GrammarValidator = GrammarValidator;
+window.TreeRenderer = TreeRenderer;
