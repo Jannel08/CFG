@@ -4,8 +4,6 @@ class TreeRenderer {
       console.error("Tree container element not found!");
       return;
     }
-    
-    // Clear old tree content
     container.innerHTML = "";
 
     if (!ast) {
@@ -16,7 +14,6 @@ class TreeRenderer {
     const treeRoot = document.createElement('div');
     treeRoot.className = 'tree';
     
-    // Wrap inside a root <ul> if your CSS requires tree lists
     const rootUl = document.createElement('ul');
     rootUl.appendChild(this.createTreeDom(ast));
     treeRoot.appendChild(rootUl);
@@ -31,7 +28,6 @@ class TreeRenderer {
     span.textContent = typeof node === 'string' ? node : node.name;
     li.appendChild(span);
 
-    // Filter out children that are epsilon ('ε')
     const validChildren = (node.children || []).filter(child => {
       const childName = typeof child === 'string' ? child : child.name;
       return childName !== 'ε';
